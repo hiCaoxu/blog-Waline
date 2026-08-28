@@ -8,6 +8,7 @@ window.SITE_DATA = {
       pinned: true,
       title: "软件测试漫谈：从点点点到质量保障",
       date: "2026-08-20",
+      updated: "2026-08-26",
       tags: ["测试理念", "质量保障"],
       excerpt: "测试不是挑刺，而是为质量提供一面镜子。聊聊从手工点到质量内建的认知升级。",
       content: `
@@ -24,6 +25,7 @@ window.SITE_DATA = {
       id: "api-auto-start",
       title: "接口自动化测试入门：从 Postman 到代码",
       date: "2026-08-22",
+      updated: "2026-08-27",
       tags: ["接口测试", "自动化"],
       excerpt: "用最少的概念打通接口自动化：请求、断言、数据驱动，以及何时该写代码而非用工具。",
       content: `
@@ -46,6 +48,7 @@ assert r.json()["status"] == "ok"</code></pre>
       id: "shift-left",
       title: "测试左移：让缺陷死在摇篮里",
       date: "2026-08-25",
+      updated: "2026-08-28",
       tags: ["测试左移", "流程"],
       excerpt: "越晚发现的缺陷，修复成本越高。左移不是多写测试，而是把质量活动前移。",
       content: `

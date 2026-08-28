@@ -166,6 +166,50 @@ a:hover { text-decoration: underline; }
 .meta { color: var(--text-3); font-size: 13px; }
 .excerpt { color: var(--text-2); margin: 10px 0 0; }
 
+/* 博客详情：元信息 / 目录 / 上一篇下一篇 */
+.post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  color: var(--text-3);
+  font-size: 13px;
+  margin: 10px 0 22px;
+}
+.toc-nav {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 0 24px;
+  font-size: 14px;
+}
+.toc-title { font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+.toc-nav a { display: block; color: var(--text-2); padding: 3px 0; text-decoration: none; }
+.toc-nav a:hover { color: var(--accent); }
+.toc-link-lv3 { padding-left: 16px; font-size: 13px; }
+.post-pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.pager-btn {
+  flex: 1;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  text-decoration: none;
+  font-size: 14px;
+  transition: border-color .15s ease, color .15s ease;
+}
+.pager-btn:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+
 /* ---------- Blog detail ---------- */
 .article { max-width: 760px; margin: 0 auto; }
 .article h1 { font-size: 28px; margin-bottom: 6px; }

@@ -100,17 +100,70 @@
       <div class="grid grid-1">${cards}</div>`;
   }
 
+  // 根据正文 h2/h3 生成目录（TOC），点击平滑滚动到对应标题
+  function buildToc(bodyClass, tocId) {
+    const body = app.querySelector("." + bodyClass);
+    const toc = document.getElementById(tocId);
+    if (!body || !toc) return;
+    const heads = Array.from(body.querySelectorAll("h2, h3"));
+    if (!heads.length) { toc.style.display = "none"; return; }
+    const items = heads.map((h, i) => {
+      const hid = "toc-h-" + i;
+      h.id = hid;
+      const cls = h.tagName === "H3" ? "toc-link-lv3" : "toc-link-lv2";
+      return `<a class="${cls}" href="#" data-toc="${hid}">${esc(h.textContent)}</a>`;
+    }).join("");
+    toc.innerHTML = `<div class="toc-title">目录</div>${items}`;
+    toc.querySelectorAll("[data-toc]").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        const el = document.getElementById(a.dataset.toc);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  }
   function renderBlogDetail(id) {
     setActive("blog");
-    const p = (D.blog || []).find((x) => x.id === id);
+    const posts = D.blog || [];
+    const pinnedIdx = posts.findIndex((p) => p.pinned);
+    const ordered = pinnedIdx >= 0
+      ? [posts[pinnedIdx], ...posts.filter((_, i) => i !== pinnedIdx)]
+      : posts.slice();
+    const idx = ordered.findIndex((p) => p.id === id);
+    const p = ordered[idx];
     if (!p) return renderBlogList();
-    detailShell(
-      `<a class="back-link" href="#/blog">← 返回博客</a>
-       <h1>${esc(p.title)}</h1>
-       <div class="meta">${p.date} · ${(p.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>
-       ${p.content}`,
-      "/blog/" + id
-    );
+
+    // 阅读量（本地演示，部署后端后多端同步）
+    const viewKey = "views:" + id;
+    const views = (parseInt(localStorage.getItem(viewKey) || "0", 10) || 0) + 1;
+    localStorage.setItem(viewKey, String(views));
+
+    const prev = idx > 0 ? ordered[idx - 1] : null;
+    const next = idx < ordered.length - 1 ? ordered[idx + 1] : null;
+
+    const inner = `
+      <a class="back-link" href="#/blog">← 返回博客</a>
+      <h1>${esc(p.title)}</h1>
+      <div class="post-meta">
+        <span>创建：${esc(p.date)}</span>
+        ${p.updated ? `<span>更新：${esc(p.updated)}</span>` : ""}
+        <span>阅读：${views}</span>
+        ${(p.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}
+      </div>
+      <nav class="toc-nav" id="toc-nav" aria-label="文章目录"></nav>
+      <div class="post-body">${p.content}</div>`;
+    detailShell(inner, "/blog/" + id);
+    buildToc("post-body", "toc-nav");
+    if (prev || next) {
+      const pager = document.createElement("div");
+      pager.className = "post-pager";
+      pager.innerHTML = `
+        ${prev ? `<a class="pager-btn" href="#/blog/${prev.id}">← ${esc(prev.title)}</a>` : `<span></span>`}
+        ${next ? `<a class="pager-btn pager-next" href="#/blog/${next.id}">${esc(next.title)} →</a>` : `<span></span>`}
+      `;
+      const article = app.querySelector(".article");
+      if (article) article.appendChild(pager);
+    }
   }
 
   // ---------- 教程 ----------

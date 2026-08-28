@@ -82,46 +82,22 @@
   }
 
   // ---------- 博客 ----------
-  // 置顶状态持久化在 localStorage，且全局仅允许置顶 1 篇
-  const PIN_KEY = "blog-pinned";
-  function getPinnedId() {
-    let v = localStorage.getItem(PIN_KEY);
-    if (v === null) {
-      const d = (D.blog || []).find((p) => p.pinned);
-      v = d ? d.id : "";
-    }
-    return v;
-  }
+  // 置顶仅由作者在 data.js 通过 pinned 字段控制（全局仅 1 篇），访客不可切换
   function renderBlogList() {
     setActive("blog");
     const posts = D.blog || [];
-    const pinnedId = getPinnedId();
-    const pinned = posts.find((p) => p.id === pinnedId) || null;
-    const rest = posts.filter((p) => p.id !== pinnedId);
-    const cardHtml = (p) => {
-      const isPinned = !!pinnedId && p.id === pinnedId;
-      return `<div class="card card-wrap${isPinned ? " card-pinned" : ""}">
-        <a class="card-link" href="#/blog/${p.id}">
-          <div class="meta">${p.date} · ${isPinned ? '<span class="tag tag-pinned">置顶</span>' : ""}${(p.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>
-          <h2 style="margin:8px 0 0">${esc(p.title)}</h2>
-          <p class="excerpt">${esc(p.excerpt)}</p>
-        </a>
-        <button class="pin-btn${isPinned ? " active" : ""}" data-pin="${p.id}">${isPinned ? "取消置顶" : "置顶"}</button>
-      </div>`;
-    };
-    const cards = (pinned ? cardHtml(pinned) : "") + rest.map((p) => cardHtml(p)).join("");
+    const pinnedIdx = posts.findIndex((p) => p.pinned);
+    const pinned = pinnedIdx >= 0 ? posts[pinnedIdx] : null;
+    const rest = posts.filter((_, i) => i !== pinnedIdx);
+    const cardHtml = (p, isPinned) => `
+      <a class="card card-link${isPinned ? " card-pinned" : ""}" href="#/blog/${p.id}">
+        <div class="meta">${p.date} · ${isPinned ? '<span class="tag tag-pinned">置顶</span>' : ""}${(p.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>
+        <h2 style="margin:8px 0 0">${esc(p.title)}</h2>
+        <p class="excerpt">${esc(p.excerpt)}</p>
+      </a>`;
+    const cards = (pinned ? cardHtml(pinned, true) : "") + rest.map((p) => cardHtml(p, false)).join("");
     app.innerHTML = `<h1 class="page-title">博客</h1><p class="page-sub">测试理念与实战随笔</p>
       <div class="grid grid-1">${cards}</div>`;
-    app.querySelectorAll("[data-pin]").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const id = btn.dataset.pin;
-        if (getPinnedId() === id) localStorage.removeItem(PIN_KEY);
-        else localStorage.setItem(PIN_KEY, id);
-        renderBlogList();
-      });
-    });
   }
 
   function renderBlogDetail(id) {

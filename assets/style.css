@@ -163,23 +163,6 @@ a:hover { text-decoration: underline; }
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent-soft), var(--shadow);
 }
-.card-wrap { position: relative; }
-.pin-btn {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  font-size: 12px;
-  line-height: 1;
-  padding: 5px 11px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--text-2);
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-}
-.pin-btn:hover { border-color: var(--accent); color: var(--accent); }
-.pin-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 .meta { color: var(--text-3); font-size: 13px; }
 .excerpt { color: var(--text-2); margin: 10px 0 0; }
 

@@ -171,45 +171,64 @@
     });
   }
 
-  // ---------- 题库 ----------
-  function renderBankHome() {
-    setActive("bank");
-    const cards = (D.bank || []).map((c) => `
-      <a class="card card-link" href="#/bank/${c.id}">
-        <h2 style="margin:0 0 6px">${esc(c.title)}</h2>
-        <p class="excerpt">${c.questions.length} 道面试题 · 点击查看</p>
-      </a>`).join("");
-    app.innerHTML = `<h1 class="page-title">题库</h1><p class="page-sub">面试向题目与解析，答案默认折叠</p>
-      <div class="grid grid-1">${cards}</div>`;
-  }
-  function renderBankCategory(cat, qid) {
-    setActive("bank");
-    const c = (D.bank || []).find((x) => x.id === cat);
-    if (!c) return renderBankHome();
-    const items = c.questions.map((q) => {
-      const open = q.id === qid ? " open" : "";
-      return `<div class="q-item${open}" id="q-${q.id}">
+  // ---------- 题库（教程式结构：左侧一级目录 + 右侧题目，答案默认折叠）----------
+  function buildBankContent(c) {
+    const items = c.questions.map((q) => `
+      <div class="q-item" id="q-${q.id}">
         <button class="q-head" data-q="${q.id}">
           <span>${esc(q.title)}</span>
           <svg class="q-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
         </button>
         <div class="q-answer prose">${q.answer}</div>
-        ${likeBlock("/bank/" + cat + "/" + q.id)}
-      </div>`;
-    }).join("");
-    app.innerHTML = `<a class="back-link" href="#/bank">← 题库分类</a>
-      <h1 class="page-title">${esc(c.title)}</h1>
+        ${likeBlock("/bank/" + c.id + "/" + q.id)}
+      </div>`).join("");
+    return `<a class="back-link" href="#/bank">← 题库目录</a>
+      <h1 class="page-title" style="margin-top:6px">${esc(c.title)}</h1>
       <p class="page-sub">点击题目展开/收起答案</p>${items}
       <div id="waline" class="waline-wrap"></div>`;
-    bindLikes();
-    mountWaline("/bank/" + cat);
+  }
+  function bindBankToggles() {
     app.querySelectorAll("[data-q]").forEach((btn) => {
       btn.addEventListener("click", () => btn.parentElement.classList.toggle("open"));
     });
-    if (qid) {
-      const el = document.getElementById("q-" + qid);
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function openAndScroll(qid) {
+    const el = document.getElementById("q-" + qid);
+    if (el) { el.classList.add("open"); el.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  }
+  let curBank = null;
+  function renderBank(catId, qid) {
+    setActive("bank");
+    const c = (D.bank || []).find((x) => x.id === catId) || (D.bank || [])[0];
+    if (!c) { app.innerHTML = "<p>暂无题库。</p>"; return; }
+    const layout = app.querySelector(".tutorial-layout");
+    if (curBank === c.id && layout) {
+      // 同一题库分类内：只更新右侧内容，保留左侧高亮与题目折叠状态
+      const content = layout.querySelector(".tutorial-content");
+      content.innerHTML = buildBankContent(c);
+      bindLikes();
+      mountWaline("/bank/" + c.id);
+      app.querySelectorAll(".toc-link").forEach((a) => {
+        a.classList.toggle("active", a.getAttribute("href") === `#/bank/${c.id}`);
+      });
+      bindBankToggles();
+      if (qid) openAndScroll(qid);
+      return;
     }
+    curBank = c.id;
+    const catLinks = (D.bank || []).map((x) =>
+      `<li><a class="toc-link" href="#/bank/${x.id}">${esc(x.title)}</a></li>`
+    ).join("");
+    const side = `<aside class="tutorial-side"><h3>题库</h3><ul class="toc-tree">${catLinks}</ul></aside>`;
+    const content = `<div class="tutorial-content">${buildBankContent(c)}</div>`;
+    app.innerHTML = `<div class="tutorial-layout">${side}${content}</div>`;
+    bindLikes();
+    mountWaline("/bank/" + c.id);
+    app.querySelectorAll(".toc-link").forEach((a) => {
+      if (a.getAttribute("href") === `#/bank/${c.id}`) a.classList.add("active");
+    });
+    bindBankToggles();
+    if (qid) openAndScroll(qid);
   }
 
   // ---------- 关于我 ----------
@@ -234,10 +253,7 @@
       return renderBlogList();
     }
     if (a === "tutorial") return renderTutorial(b, c);
-    if (a === "bank") {
-      if (b) return renderBankCategory(b, c);
-      return renderBankHome();
-    }
+    if (a === "bank") return renderBank(b, c);
     if (a === "about") return renderAbout();
     return renderBlogList();
   }

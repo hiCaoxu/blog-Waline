@@ -90,7 +90,7 @@
         <p class="excerpt">${esc(p.excerpt)}</p>
       </a>`).join("");
     app.innerHTML = `<h1 class="page-title">博客</h1><p class="page-sub">测试理念与实战随笔</p>
-      <div class="grid grid-2">${cards}</div>`;
+      <div class="grid grid-1">${cards}</div>`;
   }
 
   function renderBlogDetail(id) {
@@ -125,22 +125,37 @@
       return `<li><a class="toc-link" href="#/tutorial/${tid}/${n.id}">${esc(n.title)}</a></li>`;
     }).join("")}</ul>`;
   }
+  let curTut = null;
+  function buildTutContent(t, leaf) {
+    const breadcrumb = leaf.trail.map(esc).join(" / ");
+    return `<a class="back-link" href="#/tutorial">← 教程目录</a>
+      <div class="meta">${breadcrumb}</div>
+      <h1 style="margin-top:6px">${esc(leaf.title)}</h1>
+      <div class="prose">${leaf.content}</div>
+      ${likeBlock("/tutorial/" + t.id + "/" + leaf.id)}
+      <div id="waline" class="waline-wrap"></div>`;
+  }
   function renderTutorial(tid, lid) {
     setActive("tutorial");
     const t = (D.tutorials || []).find((x) => x.id === tid) || (D.tutorials || [])[0];
     if (!t) { app.innerHTML = "<p>暂无教程。</p>"; return; }
     const leaves = collectLeaves(t);
     const leaf = leaves.find((l) => l.id === lid) || leaves[0];
+    const layout = app.querySelector(".tutorial-layout");
+    if (curTut === t.id && layout) {
+      // 同一教程内切换条目：只更新右侧内容，保留左侧目录的折叠状态
+      const content = layout.querySelector(".tutorial-content");
+      content.innerHTML = buildTutContent(t, leaf);
+      bindLikes();
+      mountWaline("/tutorial/" + t.id + "/" + leaf.id);
+      app.querySelectorAll(".toc-link").forEach((a) => {
+        a.classList.toggle("active", a.getAttribute("href") === `#/tutorial/${t.id}/${leaf.id}`);
+      });
+      return;
+    }
+    curTut = t.id;
     const side = `<aside class="tutorial-side"><h3>${esc(t.title)}</h3>${tocHtml(t.tree, t.id)}</aside>`;
-    const breadcrumb = leaf.trail.map(esc).join(" / ");
-    const content = `<div class="tutorial-content">
-      <a class="back-link" href="#/tutorial">← 教程目录</a>
-      <div class="meta">${breadcrumb}</div>
-      <h1 style="margin-top:6px">${esc(leaf.title)}</h1>
-      <div class="prose">${leaf.content}</div>
-      ${likeBlock("/tutorial/" + t.id + "/" + leaf.id)}
-      <div id="waline" class="waline-wrap"></div>
-    </div>`;
+    const content = `<div class="tutorial-content">${buildTutContent(t, leaf)}</div>`;
     app.innerHTML = `<div class="tutorial-layout">${side}${content}</div>`;
     bindLikes();
     mountWaline("/tutorial/" + t.id + "/" + leaf.id);
@@ -165,7 +180,7 @@
         <p class="excerpt">${c.questions.length} 道面试题 · 点击查看</p>
       </a>`).join("");
     app.innerHTML = `<h1 class="page-title">题库</h1><p class="page-sub">面试向题目与解析，答案默认折叠</p>
-      <div class="grid grid-3">${cards}</div>`;
+      <div class="grid grid-1">${cards}</div>`;
   }
   function renderBankCategory(cat, qid) {
     setActive("bank");

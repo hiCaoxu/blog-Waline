@@ -17,7 +17,7 @@ window.SITE_DATA = {
         <p>测试最核心的输出不是"通过/失败"，而是<strong>关于质量的可信信息</strong>：当前版本的风险分布、哪些模块最脆弱、发布是否安全。</p>
         <h2>质量内建优于事后把关</h2>
         <p>把质量检查挪到需求与编码阶段，比上线前集中测试成本低一个数量级。这正是测试左移的意义。</p>
-        <pre><code>需求评审 → 用例设计 → 编码自测 → 持续集成 → 探索性测试</code></pre>
+        <pre><code class="language-plaintext">需求评审 → 用例设计 → 编码自测 → 持续集成 → 探索性测试</code></pre>
         <p>没有完美的代码，只有未发现的缺陷。我们能做的，是让缺陷尽可能早地被看见。</p>
       `
     },
@@ -37,7 +37,7 @@ window.SITE_DATA = {
           <li><strong>管数据</strong>：用变量与数据文件驱动多场景。</li>
         </ol>
         <h2>一段最小可用的 Python 示例</h2>
-        <pre><code>import requests
+        <pre><code class="language-python">import requests
 r = requests.get("https://api.example.com/health")
 assert r.status_code == 200
 assert r.json()["status"] == "ok"</code></pre>

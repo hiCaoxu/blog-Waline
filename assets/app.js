@@ -10,13 +10,31 @@
     if (saved) document.documentElement.setAttribute("data-theme", saved);
     else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)
       document.documentElement.setAttribute("data-theme", "dark");
+    applyHljsTheme();
   })();
   document.getElementById("theme-toggle").addEventListener("click", () => {
     const cur = document.documentElement.getAttribute("data-theme");
     const next = cur === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("theme", next);
+    applyHljsTheme();
   });
+
+  // 根据明暗主题切换 highlight.js 配色
+  function applyHljsTheme() {
+    const dark = document.documentElement.getAttribute("data-theme") === "dark";
+    const url = dark
+      ? "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+      : "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css";
+    let link = document.getElementById("hljs-theme");
+    if (!link) {
+      link = document.createElement("link");
+      link.id = "hljs-theme";
+      link.rel = "stylesheet";
+      document.head.appendChild(link);
+    }
+    if (link.getAttribute("href") !== url) link.setAttribute("href", url);
+  }
 
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
@@ -303,19 +321,106 @@
     mountWaline("/about");
   }
 
+  // ---------- 代码块增强：语法高亮 + 行号 + 语言标签 + 复制 ----------
+  const LANG_LABELS = {
+    js: "JavaScript", javascript: "JavaScript", ts: "TypeScript", typescript: "TypeScript",
+    py: "Python", python: "Python", bash: "Bash", sh: "Shell", shell: "Shell", zsh: "Shell",
+    json: "JSON", yaml: "YAML", yml: "YAML", html: "HTML", xml: "XML", css: "CSS",
+    sql: "SQL", java: "Java", c: "C", cpp: "C++", "c++": "C++", go: "Go", golang: "Go",
+    md: "Markdown", markdown: "Markdown", text: "TEXT", plaintext: "TEXT", txt: "TEXT",
+    dockerfile: "Dockerfile", makefile: "Makefile",
+  };
+  function fallbackCopy(t) {
+    const ta = document.createElement("textarea");
+    ta.value = t;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(t) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(t).catch(() => fallbackCopy(t));
+    }
+    fallbackCopy(t);
+    return Promise.resolve();
+  }
+  function enhanceCodeBlocks(root) {
+    root.querySelectorAll("pre > code").forEach((code) => {
+      const pre = code.parentElement;
+      if (pre.dataset.enhanced) return;
+      pre.dataset.enhanced = "1";
+
+      // 语法高亮（highlight.js，缺失时自动降级为纯文本）
+      let lang = "";
+      const m0 = (code.className || "").match(/language-([\w+#-]+)/);
+      if (m0) lang = m0[1].toLowerCase();
+      if (window.hljs) {
+        try { window.hljs.highlightElement(code); } catch (e) {}
+        const m1 = (code.className || "").match(/language-([\w+#-]+)/);
+        if (m1) lang = m1[1].toLowerCase();
+      }
+
+      const text = code.textContent || "";
+      const lineCount = text.split("\n").length;
+
+      const gutter = document.createElement("div");
+      gutter.className = "code-gutter";
+      let gh = "";
+      for (let i = 1; i <= lineCount; i++) gh += "<span>" + i + "</span>";
+      gutter.innerHTML = gh;
+
+      const label = LANG_LABELS[lang] || (lang ? lang.toUpperCase() : "TEXT");
+
+      const head = document.createElement("div");
+      head.className = "code-head";
+      const langEl = document.createElement("span");
+      langEl.className = "code-lang";
+      langEl.textContent = label;
+      const copyBtn = document.createElement("button");
+      copyBtn.className = "code-copy";
+      copyBtn.type = "button";
+      copyBtn.textContent = "复制";
+      copyBtn.addEventListener("click", () => {
+        copyText(text).then(() => {
+          copyBtn.textContent = "已复制";
+          copyBtn.classList.add("copied");
+          setTimeout(() => { copyBtn.textContent = "复制"; copyBtn.classList.remove("copied"); }, 1500);
+        });
+      });
+      head.appendChild(langEl);
+      head.appendChild(copyBtn);
+
+      const body = document.createElement("div");
+      body.className = "code-body";
+      pre.parentNode.insertBefore(body, pre);
+      body.appendChild(gutter);
+      body.appendChild(pre);
+
+      const wrap = document.createElement("div");
+      wrap.className = "code-block";
+      body.parentNode.insertBefore(wrap, body);
+      wrap.appendChild(head);
+      wrap.appendChild(body);
+      pre.classList.add("code-pre");
+    });
+  }
+
   // ---------- 路由 ----------
   function router() {
     const raw = location.hash.replace(/^#\/?/, "");
     const parts = raw.split("/").filter(Boolean);
     const [a, b, c] = parts;
     if (!a || a === "blog") {
-      if (b) return renderBlogDetail(b);
-      return renderBlogList();
-    }
-    if (a === "tutorial") return renderTutorial(b, c);
-    if (a === "bank") return renderBank(b, c);
-    if (a === "about") return renderAbout();
-    return renderBlogList();
+      if (b) renderBlogDetail(b);
+      else renderBlogList();
+    } else if (a === "tutorial") renderTutorial(b, c);
+    else if (a === "bank") renderBank(b, c);
+    else if (a === "about") renderAbout();
+    else renderBlogList();
+    enhanceCodeBlocks(app);
   }
 
   window.addEventListener("hashchange", router);

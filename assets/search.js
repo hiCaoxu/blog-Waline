@@ -3,9 +3,13 @@
   const D = window.SITE_DATA || {};
   const index = [];
 
-  function strip(html) {
+  function strip(src) {
+    let html = src || "";
+    if (window.marked && typeof window.marked.parse === "function") {
+      try { html = window.marked.parse(html); } catch (e) {}
+    }
     const tmp = document.createElement("div");
-    tmp.innerHTML = html || "";
+    tmp.innerHTML = html;
     return (tmp.textContent || "").replace(/\s+/g, " ").trim();
   }
   function snippet(text, n) { return text.length > n ? text.slice(0, n) + "…" : text; }

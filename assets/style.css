@@ -232,6 +232,25 @@ a:hover { text-decoration: underline; }
   overflow: auto;
 }
 .prose pre code { background: none; padding: 0; }
+.prose ul, .prose ol { margin: 12px 0; padding-left: 24px; }
+.prose li { margin: 6px 0; }
+.prose ul li { list-style: disc; }
+.prose ol li { list-style: decimal; }
+.prose blockquote {
+  margin: 16px 0;
+  padding: 8px 16px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface-2);
+  color: var(--text-2);
+  border-radius: 0 8px 8px 0;
+}
+.prose strong { font-weight: 600; color: var(--text); }
+.prose em { font-style: italic; }
+.prose hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+.prose img { max-width: 100%; border-radius: 8px; }
+.prose table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+.prose th, .prose td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+.prose th { background: var(--surface-2); font-weight: 600; }
 
 /* ---------- 代码块增强（高亮 + 行号 + 语言标签 + 复制） ---------- */
 .code-block {

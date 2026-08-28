@@ -41,6 +41,13 @@
 
   // ---------- 工具 ----------
   function esc(s) { return (s || "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+  // Markdown 渲染：内容以 Markdown 编写，优先用 marked 解析；marked 缺失时原样返回（优雅降级）
+  function md(src) {
+    if (window.marked && typeof window.marked.parse === "function") {
+      try { return window.marked.parse(src || ""); } catch (e) {}
+    }
+    return src || "";
+  }
   function setActive(route) {
     navLinks.forEach((a) => a.classList.toggle("active", a.dataset.route === route));
   }
@@ -175,7 +182,7 @@
         ${(p.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}
       </div>
       <nav class="toc-nav" id="toc-nav" aria-label="文章目录"></nav>
-      <div class="post-body">${p.content}</div>`;
+      <div class="post-body">${md(p.content)}</div>`;
     detailShell(inner, "/blog/" + id);
     buildToc("post-body", "toc-nav");
     if (prev || next) {
@@ -234,7 +241,7 @@
         <span class="meta-like">点赞：${likes}</span>
       </div>
       <nav class="toc-nav" id="toc-nav" aria-label="本页目录"></nav>
-      <div class="prose post-body">${leaf.content}</div>
+      <div class="prose post-body">${md(leaf.content)}</div>
       ${likeBlock(likeKey)}
       ${pager}
       <div id="waline" class="waline-wrap"></div>`;
@@ -288,7 +295,7 @@
           <span>${esc(q.title)}</span>
           <svg class="q-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
         </button>
-        <div class="q-answer prose">${q.answer}</div>
+        <div class="q-answer prose">${md(q.answer)}</div>
         ${likeBlock("/bank/" + c.id + "/" + q.id)}
       </div>`).join("");
     return `<a class="back-link" href="#/bank">← 题库目录</a>
@@ -345,7 +352,7 @@
     setActive("about");
     const a = D.about || {};
     app.innerHTML = `<div class="about-card card"><h1 class="page-title">${esc(a.title || "关于我")}</h1>
-      <div class="prose">${a.content || ""}</div>
+      <div class="prose">${md(a.content || "")}</div>
       ${likeBlock("/about")}
       <div id="waline" class="waline-wrap"></div>`;
     bindLikes();

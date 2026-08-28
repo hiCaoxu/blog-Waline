@@ -5,6 +5,7 @@ window.SITE_DATA = {
   blog: [
     {
       id: "quality-not-bugs",
+      pinned: true,
       title: "软件测试漫谈：从点点点到质量保障",
       date: "2026-08-20",
       tags: ["测试理念", "质量保障"],

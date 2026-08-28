@@ -84,12 +84,17 @@
   // ---------- 博客 ----------
   function renderBlogList() {
     setActive("blog");
-    const cards = (D.blog || []).map((p) => `
-      <a class="card card-link" href="#/blog/${p.id}">
-        <div class="meta">${p.date} · ${(p.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>
+    const posts = D.blog || [];
+    const pinnedIdx = posts.findIndex((p) => p.pinned); // 只支持置顶 1 篇：取首个置顶项
+    const pinned = pinnedIdx >= 0 ? posts[pinnedIdx] : null;
+    const rest = posts.filter((_, i) => i !== pinnedIdx);
+    const cardHtml = (p, isPinned) => `
+      <a class="card card-link${isPinned ? " card-pinned" : ""}" href="#/blog/${p.id}">
+        <div class="meta">${p.date} · ${isPinned ? '<span class="tag tag-pinned">置顶</span>' : ""}${(p.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>
         <h2 style="margin:8px 0 0">${esc(p.title)}</h2>
         <p class="excerpt">${esc(p.excerpt)}</p>
-      </a>`).join("");
+      </a>`;
+    const cards = (pinned ? cardHtml(pinned, true) : "") + rest.map((p) => cardHtml(p, false)).join("");
     app.innerHTML = `<h1 class="page-title">博客</h1><p class="page-sub">测试理念与实战随笔</p>
       <div class="grid grid-1">${cards}</div>`;
   }

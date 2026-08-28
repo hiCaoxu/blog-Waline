@@ -1,0 +1,11 @@
+{
+  "name": "caoxu-blog",
+  "version": "1.0.0",
+  "description": "CaoxuBlog — 面向测试工程师的纯静态个人博客（腾讯云 COS 托管 + Waline 评论）",
+  "private": true,
+  "scripts": {
+    "preview": "python3 -m http.server 8000",
+    "deploy:cos": "bash deploy/deploy-cos.sh"
+  },
+  "license": "MIT"
+}

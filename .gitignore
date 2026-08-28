@@ -1,0 +1,14 @@
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
+*.swp
+
+# 依赖（纯静态站点无需）
+node_modules/
+
+# 本地临时
+*.local
+.cache/
+
+# WorkBuddy 项目数据（非站点内容）
+.workbuddy/

@@ -73,9 +73,10 @@
   }
 
   function detailShell(inner, key) {
-    app.innerHTML = `<article class="article prose">${inner}</article>
+    app.innerHTML = `<article class="article prose">${inner}
       ${likeBlock(key)}
-      <div id="waline" class="waline-wrap"></div>`;
+      <div id="waline" class="waline-wrap"></div>
+    </article>`;
     bindLikes();
     mountWaline(key);
   }

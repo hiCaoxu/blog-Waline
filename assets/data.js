@@ -1,5 +1,5 @@
 // CaoxuBlog 站点内容数据
-// 主题：软件测试工程师。所有正文使用 Markdown 编写，由 marked 解析渲染（见 app.js 的 md()）。
+// 主题：软件测试工程师。所有正文使用 Markdown 编写，由内置解析器 assets/markdown.js 渲染（见 app.js 的 md()）。
 // 代码块用 ~~~ 围栏（避免与 JS 模板字符串反引号冲突），如 ~~~python / ~~~text。
 window.SITE_DATA = {
   // ---------------- 博客 ----------------

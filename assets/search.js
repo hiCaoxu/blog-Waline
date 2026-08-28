@@ -5,9 +5,7 @@
 
   function strip(src) {
     let html = src || "";
-    if (window.marked && typeof window.marked.parse === "function") {
-      try { html = window.marked.parse(html); } catch (e) {}
-    }
+    try { html = window.parseMarkdown(html); } catch (e) {}
     const tmp = document.createElement("div");
     tmp.innerHTML = html;
     return (tmp.textContent || "").replace(/\s+/g, " ").trim();

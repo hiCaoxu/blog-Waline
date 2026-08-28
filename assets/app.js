@@ -41,12 +41,9 @@
 
   // ---------- 工具 ----------
   function esc(s) { return (s || "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
-  // Markdown 渲染：内容以 Markdown 编写，优先用 marked 解析；marked 缺失时原样返回（优雅降级）
+  // Markdown 渲染：内容以 Markdown 编写，由内置零依赖解析器 window.parseMarkdown 处理（见 assets/markdown.js）
   function md(src) {
-    if (window.marked && typeof window.marked.parse === "function") {
-      try { return window.marked.parse(src || ""); } catch (e) {}
-    }
-    return src || "";
+    try { return window.parseMarkdown(src || ""); } catch (e) { return src || ""; }
   }
   function setActive(route) {
     navLinks.forEach((a) => a.classList.toggle("active", a.dataset.route === route));

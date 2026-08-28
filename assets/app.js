@@ -67,6 +67,12 @@
         btn.classList.toggle("liked", !on);
         btn.querySelector(".like-count").textContent = on ? 0 : 1;
         btn.querySelector("svg").setAttribute("fill", on ? "none" : "currentColor");
+        // 同步标题下方的点赞数量
+        const wrap = btn.closest(".tutorial-content") || btn.closest(".article");
+        if (wrap) {
+          const ml = wrap.querySelector(".meta-like");
+          if (ml) ml.textContent = "点赞：" + (on ? 0 : 1);
+        }
       });
     });
   }
@@ -204,13 +210,33 @@
     }).join("")}</ul>`;
   }
   let curTut = null;
-  function buildTutContent(t, leaf) {
+  function buildTutContent(t, leaf, prevLeaf, nextLeaf) {
     const breadcrumb = leaf.trail.map(esc).join(" / ");
+    // 阅读量（本地演示，部署后端后多端同步）
+    const viewKey = "views:" + t.id + "/" + leaf.id;
+    const views = (parseInt(localStorage.getItem(viewKey) || "0", 10) || 0) + 1;
+    localStorage.setItem(viewKey, String(views));
+    // 点赞数量（与下方点赞按钮共用 localStorage）
+    const likeKey = "/tutorial/" + t.id + "/" + leaf.id;
+    const likes = localStorage.getItem("like:" + likeKey) === "1" ? 1 : 0;
+    const pager = (prevLeaf || nextLeaf) ? `
+      <div class="post-pager">
+        ${prevLeaf ? `<a class="pager-btn" href="#/tutorial/${t.id}/${prevLeaf.id}">← ${esc(prevLeaf.title)}</a>` : `<span></span>`}
+        ${nextLeaf ? `<a class="pager-btn pager-next" href="#/tutorial/${t.id}/${nextLeaf.id}">${esc(nextLeaf.title)} →</a>` : `<span></span>`}
+      </div>` : "";
     return `<a class="back-link" href="#/tutorial">← 教程目录</a>
       <div class="meta">${breadcrumb}</div>
       <h1 style="margin-top:6px">${esc(leaf.title)}</h1>
-      <div class="prose">${leaf.content}</div>
-      ${likeBlock("/tutorial/" + t.id + "/" + leaf.id)}
+      <div class="post-meta">
+        <span>创建：${esc(t.date || "—")}</span>
+        ${t.updated ? `<span>更新：${esc(t.updated)}</span>` : ""}
+        <span>阅读：${views}</span>
+        <span class="meta-like">点赞：${likes}</span>
+      </div>
+      <nav class="toc-nav" id="toc-nav" aria-label="本页目录"></nav>
+      <div class="prose post-body">${leaf.content}</div>
+      ${likeBlock(likeKey)}
+      ${pager}
       <div id="waline" class="waline-wrap"></div>`;
   }
   function renderTutorial(tid, lid) {
@@ -218,14 +244,18 @@
     const t = (D.tutorials || []).find((x) => x.id === tid) || (D.tutorials || [])[0];
     if (!t) { app.innerHTML = "<p>暂无教程。</p>"; return; }
     const leaves = collectLeaves(t);
-    const leaf = leaves.find((l) => l.id === lid) || leaves[0];
+    const idx = Math.max(0, leaves.findIndex((l) => l.id === lid));
+    const leaf = leaves[idx];
+    const prevLeaf = idx > 0 ? leaves[idx - 1] : null;
+    const nextLeaf = idx < leaves.length - 1 ? leaves[idx + 1] : null;
     const layout = app.querySelector(".tutorial-layout");
     if (curTut === t.id && layout) {
       // 同一教程内切换条目：只更新右侧内容，保留左侧目录的折叠状态
       const content = layout.querySelector(".tutorial-content");
-      content.innerHTML = buildTutContent(t, leaf);
+      content.innerHTML = buildTutContent(t, leaf, prevLeaf, nextLeaf);
       bindLikes();
       mountWaline("/tutorial/" + t.id + "/" + leaf.id);
+      buildToc("post-body", "toc-nav");
       app.querySelectorAll(".toc-link").forEach((a) => {
         a.classList.toggle("active", a.getAttribute("href") === `#/tutorial/${t.id}/${leaf.id}`);
       });
@@ -233,10 +263,11 @@
     }
     curTut = t.id;
     const side = `<aside class="tutorial-side"><h3>${esc(t.title)}</h3>${tocHtml(t.tree, t.id)}</aside>`;
-    const content = `<div class="tutorial-content">${buildTutContent(t, leaf)}</div>`;
+    const content = `<div class="tutorial-content">${buildTutContent(t, leaf, prevLeaf, nextLeaf)}</div>`;
     app.innerHTML = `<div class="tutorial-layout">${side}${content}</div>`;
     bindLikes();
     mountWaline("/tutorial/" + t.id + "/" + leaf.id);
+    buildToc("post-body", "toc-nav");
     // 折叠/展开与高亮
     app.querySelectorAll(".toc-parent").forEach((sp) => {
       sp.addEventListener("click", () => {

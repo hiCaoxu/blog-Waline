@@ -70,6 +70,8 @@ assert r.json()["status"] == "ok"</code></pre>
     {
       id: "func",
       title: "功能测试实战",
+      date: "2026-08-18",
+      updated: "2026-08-27",
       tree: [
         {
           id: "case", title: "用例设计", children: [
@@ -136,6 +138,8 @@ assert r.json()["status"] == "ok"</code></pre>
     {
       id: "auto",
       title: "自动化测试进阶",
+      date: "2026-08-22",
+      updated: "2026-08-28",
       tree: [
         {
           id: "ui", title: "UI 自动化", children: [

@@ -453,6 +453,88 @@ a:hover { text-decoration: underline; }
 .search-empty { padding: 18px; color: var(--text-3); text-align: center; }
 .hidden { display: none !important; }
 
+/* ---------- 标签筛选栏 ---------- */
+.tag-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+.tag-chip {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 14px;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.tag-chip:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+.tag-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+/* ---------- 博客详情：双栏（正文 + sticky 目录） ---------- */
+.post-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 230px;
+  gap: 32px;
+  align-items: start;
+}
+.post-layout .article { max-width: none; margin: 0; }
+.post-toc { position: sticky; top: 96px; align-self: start; }
+.post-toc .toc-nav { margin: 0; }
+@media (max-width: 980px) {
+  .post-layout { grid-template-columns: 1fr; gap: 0; }
+  .post-toc { position: static; order: -1; }
+  .post-toc .toc-nav { margin: 0 0 24px; }
+}
+
+/* ---------- 返回顶部 ---------- */
+.back-to-top {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity .2s ease, transform .2s ease, visibility .2s ease, color .15s ease, border-color .15s ease;
+  z-index: 60;
+}
+.back-to-top.show { opacity: 1; visibility: visible; transform: translateY(0); }
+.back-to-top:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ---------- 归档 / 兜底页 ---------- */
+.archive-group { margin: 0 0 26px; }
+.archive-month { font-size: 17px; margin: 0 0 10px; color: var(--text-2); }
+.archive-list { list-style: none; margin: 0; padding: 0; }
+.archive-list li {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.archive-list li:last-child { border-bottom: none; }
+.archive-date { flex: 0 0 auto; color: var(--text-3); font-size: 13px; font-variant-numeric: tabular-nums; }
+.empty-state {
+  max-width: 560px;
+  margin: 40px auto;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 34px 26px;
+  box-shadow: var(--shadow);
+}
+.empty-state .page-title { margin-bottom: 8px; }
+.empty-state .pager-btn { display: inline-block; margin-top: 10px; }
+
 /* ---------- About ---------- */
 .about-card { max-width: 760px; margin: 0 auto; }
 .back-link { display: inline-block; margin-bottom: 18px; color: var(--text-2); font-size: 14px; }

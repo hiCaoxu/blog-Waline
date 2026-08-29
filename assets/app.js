@@ -45,6 +45,20 @@
   function md(src) {
     try { return window.parseMarkdown(src || ""); } catch (e) { return src || ""; }
   }
+  // 阅读量计数：同一标签页会话内只 +1 一次，刷新不重复计数（跨会话仍累计，部署后端后可全局同步）
+  function recordView(key) {
+    let viewed = [];
+    try { viewed = JSON.parse(sessionStorage.getItem("viewed") || "[]"); } catch (e) { viewed = []; }
+    const vk = "views:" + key;
+    if (viewed.indexOf(key) === -1) {
+      const n = (parseInt(localStorage.getItem(vk) || "0", 10) || 0) + 1;
+      localStorage.setItem(vk, String(n));
+      viewed.push(key);
+      try { sessionStorage.setItem("viewed", JSON.stringify(viewed)); } catch (e) {}
+      return n;
+    }
+    return parseInt(localStorage.getItem(vk) || "0", 10) || 0;
+  }
   function setActive(route) {
     navLinks.forEach((a) => a.classList.toggle("active", a.dataset.route === route));
   }
@@ -100,31 +114,33 @@
     }
   }
 
-  function detailShell(inner, key) {
-    app.innerHTML = `<article class="article prose">${inner}
-      ${likeBlock(key)}
-      <div id="waline" class="waline-wrap"></div>
-    </article>`;
-    bindLikes();
-    mountWaline(key);
-  }
-
   // ---------- 博客 ----------
   // 置顶仅由作者在 data.js 通过 pinned 字段控制（全局仅 1 篇），访客不可切换
-  function renderBlogList() {
+  function renderBlogList(activeTag) {
     setActive("blog");
     const posts = D.blog || [];
+    const tags = Array.from(new Set(posts.flatMap((p) => p.tags || []))).sort();
     const pinnedIdx = posts.findIndex((p) => p.pinned);
-    const pinned = pinnedIdx >= 0 ? posts[pinnedIdx] : null;
-    const rest = posts.filter((_, i) => i !== pinnedIdx);
-    const cardHtml = (p, isPinned) => `
-      <a class="card card-link${isPinned ? " card-pinned" : ""}" href="#/blog/${p.id}">
-        <div class="meta">${p.date} · ${isPinned ? '<span class="tag tag-pinned">置顶</span>' : ""}${(p.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>
+    const ordered = pinnedIdx >= 0
+      ? [posts[pinnedIdx], ...posts.filter((_, i) => i !== pinnedIdx)]
+      : posts.slice();
+    // 筛选：指定标签时按标签过滤（保留置顶标记），否则用置顶优先顺序
+    const shown = activeTag ? posts.filter((p) => (p.tags || []).indexOf(activeTag) !== -1) : ordered;
+    const cardHtml = (p) => `
+      <a class="card card-link${p.pinned ? " card-pinned" : ""}" href="#/blog/${p.id}">
+        <div class="meta">${p.date} · ${p.pinned ? '<span class="tag tag-pinned">置顶</span>' : ""}${(p.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>
         <h2 style="margin:8px 0 0">${esc(p.title)}</h2>
         <p class="excerpt">${esc(p.excerpt)}</p>
       </a>`;
-    const cards = (pinned ? cardHtml(pinned, true) : "") + rest.map((p) => cardHtml(p, false)).join("");
-    app.innerHTML = `<h1 class="page-title">博客</h1><p class="page-sub">测试理念与实战随笔</p>
+    const cards = shown.map((p) => cardHtml(p)).join("");
+    const tagBar = `<div class="tag-bar">` +
+      `<a class="tag-chip${!activeTag ? " active" : ""}" href="#/blog">全部</a>` +
+      tags.map((t) => `<a class="tag-chip${activeTag === t ? " active" : ""}" href="#/tag/${encodeURIComponent(t)}">${esc(t)}</a>`).join("") +
+      `</div>`;
+    const sub = activeTag
+      ? `标签「${esc(activeTag)}」下的文章（${shown.length}） · <a href="#/blog">清除筛选</a>`
+      : `测试理念与实战随笔 · <a href="#/archive">归档</a>`;
+    app.innerHTML = `<h1 class="page-title">博客</h1><p class="page-sub">${sub}</p>${tagBar}
       <div class="grid grid-1">${cards}</div>`;
   }
 
@@ -159,39 +175,38 @@
       : posts.slice();
     const idx = ordered.findIndex((p) => p.id === id);
     const p = ordered[idx];
-    if (!p) return renderBlogList();
+    if (!p) return renderNotFound("未找到该文章", "文章可能已被移动，或链接有误。", "#/blog", "返回博客");
 
-    // 阅读量（本地演示，部署后端后多端同步）
-    const viewKey = "views:" + id;
-    const views = (parseInt(localStorage.getItem(viewKey) || "0", 10) || 0) + 1;
-    localStorage.setItem(viewKey, String(views));
-
+    const views = recordView(id);
     const prev = idx > 0 ? ordered[idx - 1] : null;
     const next = idx < ordered.length - 1 ? ordered[idx + 1] : null;
 
-    const inner = `
-      <a class="back-link" href="#/blog">← 返回博客</a>
-      <h1>${esc(p.title)}</h1>
-      <div class="post-meta">
-        <span>创建：${esc(p.date)}</span>
-        ${p.updated ? `<span>更新：${esc(p.updated)}</span>` : ""}
-        <span>阅读：${views}</span>
-        ${(p.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}
-      </div>
-      <nav class="toc-nav" id="toc-nav" aria-label="文章目录"></nav>
-      <div class="post-body">${md(p.content)}</div>`;
-    detailShell(inner, "/blog/" + id);
-    buildToc("post-body", "toc-nav");
-    if (prev || next) {
-      const pager = document.createElement("div");
-      pager.className = "post-pager";
-      pager.innerHTML = `
+    const pager = (prev || next) ? `
+      <div class="post-pager">
         ${prev ? `<a class="pager-btn" href="#/blog/${prev.id}">← ${esc(prev.title)}</a>` : `<span></span>`}
         ${next ? `<a class="pager-btn pager-next" href="#/blog/${next.id}">${esc(next.title)} →</a>` : `<span></span>`}
-      `;
-      const article = app.querySelector(".article");
-      if (article) article.appendChild(pager);
-    }
+      </div>` : "";
+
+    app.innerHTML = `<div class="post-layout">
+      <article class="article prose">
+        <a class="back-link" href="#/blog">← 返回博客</a>
+        <h1>${esc(p.title)}</h1>
+        <div class="post-meta">
+          <span>创建：${esc(p.date)}</span>
+          ${p.updated ? `<span>更新：${esc(p.updated)}</span>` : ""}
+          <span>阅读：${views}</span>
+          ${(p.tags || []).map((t) => `<a class="tag" href="#/tag/${encodeURIComponent(t)}">${esc(t)}</a>`).join("")}
+        </div>
+        <div class="post-body">${md(p.content)}</div>
+        ${likeBlock("/blog/" + id)}
+        ${pager}
+        <div id="waline" class="waline-wrap"></div>
+      </article>
+      <aside class="post-toc"><nav class="toc-nav" id="toc-nav" aria-label="文章目录"></nav></aside>
+    </div>`;
+    bindLikes();
+    mountWaline("/blog/" + id);
+    buildToc("post-body", "toc-nav");
   }
 
   // ---------- 教程 ----------
@@ -216,10 +231,8 @@
   let curTut = null;
   function buildTutContent(t, leaf, prevLeaf, nextLeaf) {
     const breadcrumb = leaf.trail.map(esc).join(" / ");
-    // 阅读量（本地演示，部署后端后多端同步）
-    const viewKey = "views:" + t.id + "/" + leaf.id;
-    const views = (parseInt(localStorage.getItem(viewKey) || "0", 10) || 0) + 1;
-    localStorage.setItem(viewKey, String(views));
+    // 阅读量（会话内去重，部署后端后多端同步）
+    const views = recordView(t.id + "/" + leaf.id);
     // 点赞数量（与下方点赞按钮共用 localStorage）
     const likeKey = "/tutorial/" + t.id + "/" + leaf.id;
     const likes = localStorage.getItem("like:" + likeKey) === "1" ? 1 : 0;
@@ -297,6 +310,10 @@
       </div>`).join("");
     return `<a class="back-link" href="#/bank">← 题库目录</a>
       <h1 class="page-title" style="margin-top:6px">${esc(c.title)}</h1>
+      <div class="post-meta">
+        <span>阅读：${recordView("bank/" + c.id)}</span>
+        <span>共 ${c.questions.length} 题</span>
+      </div>
       <p class="page-sub">点击题目展开/收起答案</p>${items}
       <div id="waline" class="waline-wrap"></div>`;
   }
@@ -349,11 +366,45 @@
     setActive("about");
     const a = D.about || {};
     app.innerHTML = `<div class="about-card card"><h1 class="page-title">${esc(a.title || "关于我")}</h1>
+      <div class="post-meta"><span>阅读：${recordView("about")}</span></div>
       <div class="prose">${md(a.content || "")}</div>
       ${likeBlock("/about")}
       <div id="waline" class="waline-wrap"></div>`;
     bindLikes();
     mountWaline("/about");
+  }
+
+  // ---------- 兜底页：深链无效 / 路由不存在 ----------
+  function renderNotFound(title, msg, linkHref, linkText) {
+    setActive("");
+    app.innerHTML = `<div class="empty-state">
+      <h1 class="page-title">${esc(title)}</h1>
+      <p class="page-sub">${esc(msg)}</p>
+      <a class="pager-btn" style="max-width:240px;text-align:center" href="${linkHref}">${esc(linkText)}</a>
+    </div>`;
+  }
+
+  // ---------- 归档：按年月分组 ----------
+  function renderArchive() {
+    setActive("blog");
+    const posts = D.blog || [];
+    const groups = {};
+    posts.forEach((p) => {
+      const ym = (p.date || "").slice(0, 7);
+      if (!ym) return;
+      (groups[ym] = groups[ym] || []).push(p);
+    });
+    const months = Object.keys(groups).sort().reverse();
+    const body = months.map((ym) => `
+      <div class="archive-group">
+        <h2 class="archive-month">${esc(ym)}</h2>
+        <ul class="archive-list">
+          ${groups[ym].map((p) => `<li><span class="archive-date">${esc(p.date)}</span><a href="#/blog/${p.id}">${esc(p.title)}</a></li>`).join("")}
+        </ul>
+      </div>`).join("");
+    app.innerHTML = `<h1 class="page-title">归档</h1>
+      <p class="page-sub">共 ${posts.length} 篇 · <a href="#/blog">返回博客</a></p>
+      ${body || '<p class="page-sub">暂无文章。</p>'}`;
   }
 
   // ---------- 代码块增强：语法高亮 + 行号 + 语言标签 + 复制 ----------
@@ -454,9 +505,26 @@
     } else if (a === "tutorial") renderTutorial(b, c);
     else if (a === "bank") renderBank(b, c);
     else if (a === "about") renderAbout();
-    else renderBlogList();
+    else if (a === "tag") renderBlogList(b ? decodeURIComponent(b) : null);
+    else if (a === "archive") renderArchive();
+    else renderNotFound("页面不存在", "你访问的页面不存在，看看其他内容吧。", "#/blog", "返回博客");
     enhanceCodeBlocks(app);
   }
+
+  // ---------- 返回顶部（滚动超过一屏后显示）----------
+  (function initBackToTop() {
+    const btn = document.createElement("button");
+    btn.id = "back-to-top";
+    btn.className = "back-to-top";
+    btn.type = "button";
+    btn.setAttribute("aria-label", "返回顶部");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>';
+    btn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+    document.body.appendChild(btn);
+    window.addEventListener("scroll", () => {
+      btn.classList.toggle("show", (window.scrollY || window.pageYOffset || 0) > 420);
+    }, { passive: true });
+  })();
 
   window.addEventListener("hashchange", router);
   if (!location.hash) location.replace("#/blog");

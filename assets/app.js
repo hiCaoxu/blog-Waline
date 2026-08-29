@@ -20,12 +20,12 @@
     applyHljsTheme();
   });
 
-  // 根据明暗主题切换 highlight.js 配色
+  // 根据明暗主题切换 highlight.js 配色（本地化，不依赖 CDN）
   function applyHljsTheme() {
     const dark = document.documentElement.getAttribute("data-theme") === "dark";
     const url = dark
-      ? "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
-      : "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css";
+      ? "assets/vendor/highlight-github-dark.min.css"
+      : "assets/vendor/highlight-github.min.css";
     let link = document.getElementById("hljs-theme");
     if (!link) {
       link = document.createElement("link");

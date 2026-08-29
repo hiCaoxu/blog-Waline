@@ -62,6 +62,9 @@
       if (fence) {
         var fenceChar = fence[2].charAt(0);
         var lang = fence[3] || "";
+        // 规范常见别名：text/txt → plaintext，避免 highlight.js 未知语言告警
+        var langAlias = { text: "plaintext", txt: "plaintext" };
+        if (langAlias[lang]) lang = langAlias[lang];
         var codeLines = [];
         i++;
         while (i < n) {

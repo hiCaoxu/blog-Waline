@@ -5,6 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CaoxuBlog · 没有完美的代码，只有未发现的缺陷</title>
   <meta name="description" content="CaoxuBlog — 测试工程师的成长笔记：博客、教程、题库与关于我。" />
+  <meta name="author" content="Caoxu" />
+  <meta name="theme-color" content="#f7f8f6" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#15171a" media="(prefers-color-scheme: dark)" />
+  <link id="canonical" rel="canonical" href="https://hicaoxu.github.io/blog-Waline/" />
+
+  <!-- Open Graph（社交分享） -->
+  <meta property="og:site_name" content="CaoxuBlog" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta id="og-title" property="og:title" content="CaoxuBlog · 没有完美的代码，只有未发现的缺陷" />
+  <meta id="og-desc" property="og:description" content="CaoxuBlog — 测试工程师的成长笔记：博客、教程、题库与关于我。" />
+  <meta id="og-url" property="og:url" content="https://hicaoxu.github.io/blog-Waline/" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta id="tw-title" name="twitter:title" content="CaoxuBlog · 没有完美的代码，只有未发现的缺陷" />
+  <meta id="tw-desc" name="twitter:description" content="CaoxuBlog — 测试工程师的成长笔记：博客、教程、题库与关于我。" />
+
+  <!-- 评论区（Waline）走 CDN，提前建连降低首评论加载延迟 -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+
+  <link rel="alternate" type="application/rss+xml" title="CaoxuBlog · 博客 RSS" href="feed.xml" />
   <link rel="stylesheet" href="assets/style.css" />
   <!-- 代码高亮主题（本地化，默认浅色；深色由 app.js 动态切换） -->
   <link id="hljs-theme" rel="stylesheet" href="assets/vendor/highlight-github.min.css" />
@@ -68,8 +90,9 @@
   <script src="assets/data.js"></script>
   <!-- 内置 Markdown 解析器（零依赖，不依赖 CDN，由 app.js 的 md() 与 search.js 共用） -->
   <script src="assets/markdown.js"></script>
-  <script src="assets/search.js"></script>
-  <script src="assets/cursor.js"></script>
+  <!-- 搜索与光标特效为非首屏能力，defer 延后执行，不阻塞首屏渲染 -->
+  <script src="assets/search.js" defer></script>
+  <script src="assets/cursor.js" defer></script>
   <!-- 代码语法高亮（highlight.js，已本地化到 assets/vendor，无需外网） -->
   <script src="assets/vendor/highlight.min.js"></script>
   <script src="assets/app.js"></script>

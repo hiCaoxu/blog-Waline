@@ -3,6 +3,10 @@
   const D = window.SITE_DATA || {};
   const app = document.getElementById("app");
   const navLinks = Array.from(document.querySelectorAll(".top-nav a"));
+  const SITE_NAME = window.SITE_NAME || "CaoxuBlog";
+  const SITE_DESC = window.SITE_DESC || "";
+  const SITE_URL = window.SITE_URL || "";
+  const SITE_AUTHOR = window.SITE_AUTHOR || "Caoxu";
 
   // ---------- 主题 ----------
   (function initTheme() {
@@ -61,6 +65,57 @@
   }
   function setActive(route) {
     navLinks.forEach((a) => a.classList.toggle("active", a.dataset.route === route));
+  }
+
+  // ---------- SEO：逐页更新 title / meta / canonical / JSON-LD ----------
+  function metaContent(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute("content", val);
+  }
+  function applySeo(opt) {
+    opt = opt || {};
+    const title = opt.title ? opt.title + " · " + SITE_NAME : SITE_NAME + " · 没有完美的代码，只有未发现的缺陷";
+    const desc = opt.description || SITE_DESC;
+    const url = SITE_URL + (opt.hash || "");
+    document.title = title;
+    const d = document.querySelector('meta[name="description"]');
+    if (d) d.setAttribute("content", desc);
+    metaContent("og-title", title);
+    metaContent("og-desc", desc);
+    metaContent("og-url", url);
+    metaContent("tw-title", title);
+    metaContent("tw-desc", desc);
+    const canon = document.getElementById("canonical");
+    if (canon) canon.setAttribute("href", url);
+
+    // JSON-LD 结构化数据：文章页用 BlogPosting，其余用 WebSite
+    let ld = document.getElementById("ld-json");
+    if (!ld) {
+      ld = document.createElement("script");
+      ld.type = "application/ld+json";
+      ld.id = "ld-json";
+      document.head.appendChild(ld);
+    }
+    const data = opt.article ? {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: opt.title || "",
+      description: desc,
+      mainEntityOfPage: { "@type": "WebPage", "@id": url },
+      datePublished: opt.date || "",
+      dateModified: opt.updated || opt.date || "",
+      author: { "@type": "Person", name: SITE_AUTHOR },
+      publisher: { "@type": "Organization", name: SITE_NAME },
+      inLanguage: "zh-CN",
+    } : {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: SITE_NAME,
+      description: desc,
+      url: SITE_URL,
+      inLanguage: "zh-CN",
+    };
+    ld.textContent = JSON.stringify(data);
   }
 
   // ---------- 点赞（浏览器本地演示，真实跨用户计数需接 CloudBase） ----------
@@ -140,6 +195,11 @@
     const sub = activeTag
       ? `标签「${esc(activeTag)}」下的文章（${shown.length}） · <a href="#/blog">清除筛选</a>`
       : `测试理念与实战随笔 · <a href="#/archive">归档</a>`;
+    applySeo({
+      title: activeTag ? "标签：" + activeTag : "博客",
+      description: SITE_DESC,
+      hash: activeTag ? "#/tag/" + encodeURIComponent(activeTag) : "#/blog",
+    });
     app.innerHTML = `<h1 class="page-title">博客</h1><p class="page-sub">${sub}</p>${tagBar}
       <div class="grid grid-1">${cards}</div>`;
   }
@@ -187,6 +247,14 @@
         ${next ? `<a class="pager-btn pager-next" href="#/blog/${next.id}">${esc(next.title)} →</a>` : `<span></span>`}
       </div>` : "";
 
+    applySeo({
+      title: p.title,
+      description: p.excerpt || SITE_DESC,
+      hash: "#/blog/" + p.id,
+      article: true,
+      date: p.date,
+      updated: p.updated || p.date,
+    });
     app.innerHTML = `<div class="post-layout">
       <article class="article prose">
         <a class="back-link" href="#/blog">← 返回博客</a>
@@ -265,6 +333,14 @@
     const leaf = leaves[idx];
     const prevLeaf = idx > 0 ? leaves[idx - 1] : null;
     const nextLeaf = idx < leaves.length - 1 ? leaves[idx + 1] : null;
+    applySeo({
+      title: leaf.title,
+      description: t.title + " · " + leaf.title,
+      hash: "#/tutorial/" + t.id + "/" + leaf.id,
+      article: true,
+      date: t.date,
+      updated: t.updated || t.date,
+    });
     const layout = app.querySelector(".tutorial-layout");
     if (curTut === t.id && layout) {
       // 同一教程内切换条目：只更新右侧内容，保留左侧目录的折叠状态
@@ -331,6 +407,7 @@
     setActive("bank");
     const c = (D.bank || []).find((x) => x.id === catId) || (D.bank || [])[0];
     if (!c) { app.innerHTML = "<p>暂无题库。</p>"; return; }
+    applySeo({ title: "题库 · " + c.title, hash: "#/bank/" + c.id });
     const layout = app.querySelector(".tutorial-layout");
     if (curBank === c.id && layout) {
       // 同一题库分类内：只更新右侧内容，保留左侧高亮与题目折叠状态
@@ -365,6 +442,7 @@
   function renderAbout() {
     setActive("about");
     const a = D.about || {};
+    applySeo({ title: "关于我", hash: "#/about" });
     app.innerHTML = `<div class="about-card card"><h1 class="page-title">${esc(a.title || "关于我")}</h1>
       <div class="post-meta"><span>阅读：${recordView("about")}</span></div>
       <div class="prose">${md(a.content || "")}</div>
@@ -377,6 +455,7 @@
   // ---------- 兜底页：深链无效 / 路由不存在 ----------
   function renderNotFound(title, msg, linkHref, linkText) {
     setActive("");
+    applySeo({ title: title, hash: linkHref });
     app.innerHTML = `<div class="empty-state">
       <h1 class="page-title">${esc(title)}</h1>
       <p class="page-sub">${esc(msg)}</p>
@@ -402,6 +481,7 @@
           ${groups[ym].map((p) => `<li><span class="archive-date">${esc(p.date)}</span><a href="#/blog/${p.id}">${esc(p.title)}</a></li>`).join("")}
         </ul>
       </div>`).join("");
+    applySeo({ title: "归档", description: "按时间浏览全部博客文章", hash: "#/archive" });
     app.innerHTML = `<h1 class="page-title">归档</h1>
       <p class="page-sub">共 ${posts.length} 篇 · <a href="#/blog">返回博客</a></p>
       ${body || '<p class="page-sub">暂无文章。</p>'}`;

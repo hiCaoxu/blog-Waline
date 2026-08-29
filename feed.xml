@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>CaoxuBlog</title>
+    <link>https://hicaoxu.github.io/blog-Waline</link>
+    <description>CaoxuBlog — 测试工程师的成长笔记：博客、教程、题库与关于我。</description>
+    <language>zh-CN</language>
+    <managingEditor>Caoxu</managingEditor>
+    <atom:link href="https://hicaoxu.github.io/blog-Waline/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>测试左移：让缺陷死在摇篮里</title>
+      <link>https://hicaoxu.github.io/blog-Waline/#/blog/shift-left</link>
+      <guid isPermaLink="false">shift-left</guid>
+      <pubDate>Tue, 25 Aug 2026 00:00:00 GMT</pubDate>
+      <description>越晚发现的缺陷，修复成本越高。左移不是多写测试，而是把质量活动前移。</description>
+    </item>
+    <item>
+      <title>接口自动化测试入门：从 Postman 到代码</title>
+      <link>https://hicaoxu.github.io/blog-Waline/#/blog/api-auto-start</link>
+      <guid isPermaLink="false">api-auto-start</guid>
+      <pubDate>Sat, 22 Aug 2026 00:00:00 GMT</pubDate>
+      <description>用最少的概念打通接口自动化：请求、断言、数据驱动，以及何时该写代码而非用工具。</description>
+    </item>
+    <item>
+      <title>软件测试漫谈：从点点点到质量保障</title>
+      <link>https://hicaoxu.github.io/blog-Waline/#/blog/quality-not-bugs</link>
+      <guid isPermaLink="false">quality-not-bugs</guid>
+      <pubDate>Thu, 20 Aug 2026 00:00:00 GMT</pubDate>
+      <description>测试不是挑刺，而是为质量提供一面镜子。聊聊从手工点到质量内建的认知升级。</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://hicaoxu.github.io/blog-Waline/sitemap.xml

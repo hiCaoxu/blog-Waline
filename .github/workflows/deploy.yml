@@ -1,0 +1,47 @@
+name: 部署到腾讯云 COS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # 允许在 Actions 页面手动触发
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # 未配置 COS 存储桶密钥时自动跳过（不会让每次 push 都失败）
+    if: ${{ secrets.COS_BUCKET != '' }}
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 准备 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 重新生成 sitemap / robots / RSS
+        run: node tools/gen-site-meta.js
+
+      - name: 安装 coscli
+        run: |
+          curl -sSL -o coscli https://github.com/tencentyun/coscli/releases/latest/download/coscli-linux
+          chmod +x coscli
+          sudo mv coscli /usr/local/bin/coscli
+          coscli --version
+
+      - name: 配置 coscli
+        env:
+          COS_BUCKET: ${{ secrets.COS_BUCKET }}
+          COS_REGION: ${{ secrets.COS_REGION }}
+          TENCENTCLOUD_SECRET_ID: ${{ secrets.TENCENTCLOUD_SECRET_ID }}
+          TENCENTCLOUD_SECRET_KEY: ${{ secrets.TENCENTCLOUD_SECRET_KEY }}
+        run: |
+          coscli config add -b "$COS_BUCKET" -r "$COS_REGION" \
+            -a "$TENCENTCLOUD_SECRET_ID" -s "$TENCENTCLOUD_SECRET_KEY"
+
+      - name: 同步到 COS 并刷新 CDN
+        env:
+          COS_BUCKET: ${{ secrets.COS_BUCKET }}
+          CDN_DOMAIN: ${{ secrets.CDN_DOMAIN }}
+        run: bash deploy/deploy-cos.sh
